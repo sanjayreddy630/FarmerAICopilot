@@ -1,0 +1,2685 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: #050806;
+  color: #f4f7f2;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   HOME
+========================================================= */
+
+.app {
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  background: #050806;
+}
+
+
+/* =========================================================
+   FARM VISUAL
+========================================================= */
+
+.farm-visual {
+  position: absolute;
+  inset: 0;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 1200px;
+
+  /* DARK GREEN SKY → GREEN MOUNTAIN → FARM */
+  background:
+    linear-gradient(
+      180deg,
+      #050806 0%,
+      #0b1d10 22%,
+      #173d20 35%,
+      #8baa88 48%,
+      #173d20 62%,
+      #071009 100%
+    );
+}
+
+/* SKY */
+
+.sky-glow {
+  position: absolute;
+
+  width: 900px;
+  height: 600px;
+
+  left: 50%;
+  top: -250px;
+
+  transform: translateX(-50%);
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(147, 255, 109, 0.18),
+      rgba(147, 255, 109, 0.04) 40%,
+      transparent 70%
+    );
+
+  filter: blur(10px);
+}
+
+
+/* SUN */
+
+.sun {
+  position: absolute;
+
+  width: 150px;
+  height: 150px;
+
+  top: 14%;
+  right: 18%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(217,255,177,0.9),
+      rgba(148,255,93,0.32) 35%,
+      rgba(112,255,72,0.04) 70%,
+      transparent 72%
+    );
+
+  filter: blur(2px);
+}
+
+
+/* CLOUDS */
+
+.cloud {
+  position: absolute;
+
+  width: 180px;
+  height: 45px;
+
+  border-radius: 50px;
+
+  background:
+    rgba(211,255,213,0.045);
+
+  filter: blur(12px);
+}
+
+.cloud-one {
+  top: 23%;
+  left: 10%;
+}
+
+.cloud-two {
+  top: 32%;
+  right: 5%;
+}
+
+
+/* =========================================================
+   HILLS
+========================================================= */
+
+.hill {
+  position: absolute;
+
+  left: -10%;
+  width: 120%;
+
+  border-radius: 50% 50% 0 0;
+
+  transform-origin: center bottom;
+}
+
+.hill-back {
+  height: 300px;
+  bottom: 31%;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(42,91,51,0.65),
+      rgba(9,28,15,0.9)
+    );
+
+  transform:
+    rotateX(12deg);
+}
+
+.hill-front {
+  height: 230px;
+  bottom: 20%;
+
+  background:
+    linear-gradient(
+      180deg,
+      #193b20,
+      #071209
+    );
+
+  transform:
+    rotateX(18deg);
+}
+
+
+/* =========================================================
+   FARM GROUND
+========================================================= */
+
+.farm-ground {
+  position: absolute;
+
+  width: 110%;
+  height: 48%;
+
+  left: -5%;
+  bottom: -8%;
+
+  transform:
+    perspective(900px)
+    rotateX(58deg);
+
+  transform-origin: center top;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #142e19 0px,
+      #142e19 48px,
+      #0c2112 49px,
+      #0c2112 72px
+    );
+
+  border-top:
+    1px solid rgba(157,255,117,0.15);
+
+  box-shadow:
+    0 -40px 100px rgba(0,0,0,0.35);
+}
+
+
+/* FARM PATH */
+
+.farm-path {
+  position: absolute;
+
+  left: 50%;
+  top: -5%;
+
+  width: 110px;
+  height: 120%;
+
+  transform:
+    translateX(-50%)
+    rotate(5deg);
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(111,79,39,0.7),
+      rgba(74,53,28,0.8),
+      rgba(111,79,39,0.7),
+      transparent
+    );
+
+  filter: blur(1px);
+}
+
+
+/* =========================================================
+   CROP GRID
+========================================================= */
+
+.crop-grid {
+  position: absolute;
+
+  inset: 5% 8%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(14, 1fr);
+
+  grid-template-rows:
+    repeat(5, 1fr);
+
+  gap: 15px 8px;
+
+  transform:
+    perspective(700px)
+    rotateX(-5deg);
+}
+
+
+.plant {
+  position: relative;
+
+  width: 24px;
+  height: 65px;
+
+  margin: auto;
+
+  transform-origin: bottom center;
+
+  filter:
+    drop-shadow(
+      0 5px 5px
+      rgba(0,0,0,0.35)
+    );
+}
+
+
+.stem {
+  position: absolute;
+
+  width: 5px;
+  height: 58px;
+
+  left: 50%;
+  bottom: 0;
+
+  transform:
+    translateX(-50%);
+
+  border-radius: 5px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #355e2d,
+      #8bc85a,
+      #355e2d
+    );
+}
+
+
+.leaf {
+  position: absolute;
+
+  width: 20px;
+  height: 9px;
+
+  border-radius:
+    100% 0 100% 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #a5df63,
+      #4c9a39
+    );
+
+  transform-origin: right center;
+}
+
+
+.leaf-left {
+  left: -4px;
+  top: 30px;
+
+  transform:
+    rotate(-28deg);
+}
+
+
+.leaf-right {
+  right: -4px;
+  top: 21px;
+
+  transform:
+    rotate(28deg)
+    scaleX(-1);
+}
+
+
+.leaf-top {
+  left: 4px;
+  top: 6px;
+
+  width: 18px;
+
+  transform:
+    rotate(-18deg);
+}
+
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+.farm-particle {
+  position: absolute;
+
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+
+  background: #9dff75;
+
+  box-shadow:
+    0 0 20px
+    rgba(157,255,117,0.8);
+}
+
+.particle-one {
+  left: 25%;
+  top: 38%;
+}
+
+.particle-two {
+  right: 28%;
+  top: 42%;
+}
+
+.particle-three {
+  left: 67%;
+  top: 28%;
+}
+
+
+/* =========================================================
+   OVERLAY
+========================================================= */
+
+.scene-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3,8,5,0.18),
+      rgba(3,8,5,0.38) 48%,
+      rgba(3,8,5,0.78) 78%,
+      #050806 100%
+    );
+
+  z-index: 1;
+}
+
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+.navbar {
+  position: relative;
+
+  z-index: 10;
+
+  height: 78px;
+
+  padding:
+    0 5%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  border-bottom:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  background:
+    rgba(4,8,5,0.38);
+
+  backdrop-filter:
+    blur(18px);
+}
+
+
+.brand {
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+}
+
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  color: #9dff75;
+
+  background:
+    rgba(157,255,117,0.08);
+
+  border:
+    1px solid
+    rgba(157,255,117,0.2);
+}
+
+
+.brand strong {
+  display: block;
+
+  font-size: 15px;
+}
+
+
+.brand span {
+  display: block;
+
+  color: #738075;
+
+  font-size: 11px;
+
+  margin-top: 2px;
+}
+
+
+.nav-links {
+  display: flex;
+
+  gap: 32px;
+}
+
+
+.nav-links a {
+  color: #89968c;
+
+  text-decoration: none;
+
+  font-size: 13px;
+
+  transition:
+    color 0.25s;
+}
+
+
+.nav-links a:hover {
+  color: #a6ff87;
+}
+
+
+.nav-button {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.28);
+
+  background:
+    rgba(157,255,117,0.08);
+
+  color: #c9ffc0;
+
+  padding:
+    10px 16px;
+
+  border-radius: 12px;
+
+  transition:
+    all 0.25s;
+}
+
+
+.nav-button:hover {
+  background:
+    rgba(157,255,117,0.15);
+
+  transform:
+    translateY(-2px);
+}
+
+
+.language-select {
+  background:
+    rgba(5,12,7,0.85);
+
+  color: #dce5dc;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.2);
+
+  border-radius: 20px;
+
+  padding:
+    8px 12px;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero {
+  position: relative;
+
+  z-index: 5;
+
+  min-height:
+    850px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding:
+    90px 20px 180px;
+}
+
+
+.hero-badge {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    9px 15px;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.25);
+
+  border-radius: 30px;
+
+  color: #a6ff87;
+
+  background:
+    rgba(10,30,14,0.45);
+
+  backdrop-filter:
+    blur(10px);
+
+  font-size: 10px;
+
+  letter-spacing:
+    1.5px;
+}
+
+
+.hero h1 {
+  margin:
+    26px 0 20px;
+
+  font-size:
+    clamp(52px, 8vw, 104px);
+
+  line-height:
+    0.91;
+
+  letter-spacing:
+    -6px;
+
+  max-width:
+    1000px;
+
+  text-shadow:
+    0 15px 50px
+    rgba(0,0,0,0.6);
+}
+
+
+.hero h1 span {
+  color: #a3ff80;
+
+  text-shadow:
+    0 0 35px
+    rgba(117,255,78,0.18);
+}
+
+
+.hero p {
+  max-width:
+    620px;
+
+  color:
+    rgba(222,232,224,0.68);
+
+  font-size:
+    16px;
+
+  line-height:
+    1.7;
+
+  margin:
+    0 0 30px;
+}
+
+
+/* =========================================================
+   QUESTION BOX
+========================================================= */
+
+.question-box {
+  width:
+    min(700px, 92vw);
+
+  height:
+    70px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    8px;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.28);
+
+  border-radius:
+    20px;
+
+  background:
+    rgba(5,14,7,0.76);
+
+  backdrop-filter:
+    blur(22px);
+
+  box-shadow:
+    0 25px 80px
+    rgba(0,0,0,0.35),
+
+    inset 0 1px 0
+    rgba(255,255,255,0.05);
+
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+
+.question-box:focus-within {
+  border-color:
+    rgba(157,255,117,0.65);
+
+  box-shadow:
+    0 25px 90px
+    rgba(0,0,0,0.4),
+
+    0 0 35px
+    rgba(120,255,80,0.08);
+}
+
+
+.question-icon {
+  width:
+    48px;
+
+  height:
+    48px;
+
+  flex-shrink:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(157,255,117,0.09);
+
+  color:
+    #a4ff82;
+}
+
+
+.question-box input {
+  flex:
+    1;
+
+  min-width:
+    0;
+
+  border:
+    0;
+
+  outline:
+    0;
+
+  background:
+    transparent;
+
+  color:
+    #f4f8f3;
+
+  font-size:
+    15px;
+}
+
+
+.question-box input::placeholder {
+  color:
+    #647068;
+}
+
+
+.question-box button {
+  width:
+    52px;
+
+  height:
+    52px;
+
+  border:
+    0;
+
+  border-radius:
+    15px;
+
+  background:
+    #a2ff7d;
+
+  color:
+    #0a160b;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  transition:
+    all 0.25s;
+}
+
+
+.question-box button:hover {
+  background:
+    #c1ffa7;
+
+  box-shadow:
+    0 0 35px
+    rgba(157,255,117,0.25);
+}
+
+
+.question-box button:disabled {
+  opacity:
+    0.4;
+
+  cursor:
+    not-allowed;
+}
+
+
+.hint {
+  margin-top:
+    13px;
+
+  color:
+    #667269;
+
+  font-size:
+    11px;
+}
+
+
+/* =========================================================
+   TRUST
+========================================================= */
+
+.trust-row {
+  display:
+    flex;
+
+  gap:
+    38px;
+
+  margin-top:
+    30px;
+}
+
+
+.trust-row div {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    7px;
+
+  color:
+    #7d897f;
+
+  font-size:
+    12px;
+}
+
+
+.trust-row svg {
+  width:
+    15px;
+
+  color:
+    #9dff75;
+}
+
+
+/* =========================================================
+   FEATURES
+========================================================= */
+
+.features {
+  position:
+    relative;
+
+  z-index:
+    5;
+
+  padding:
+    120px 6%;
+
+  background:
+    linear-gradient(
+      180deg,
+      #050806,
+      #08100a
+    );
+}
+
+
+.section-heading span {
+  color:
+    #87b47a;
+
+  font-size:
+    10px;
+
+  letter-spacing:
+    2px;
+}
+
+
+.section-heading h2 {
+  margin:
+    15px 0 55px;
+
+  font-size:
+    clamp(40px, 6vw, 76px);
+
+  line-height:
+    0.95;
+
+  letter-spacing:
+    -4px;
+}
+
+
+.feature-grid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap:
+    16px;
+}
+
+
+.feature-card {
+  position:
+    relative;
+
+  min-height:
+    280px;
+
+  padding:
+    28px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius:
+    22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,30,21,0.9),
+      rgba(8,13,9,0.9)
+    );
+
+  transform-style:
+    preserve-3d;
+
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+
+.feature-card:hover {
+  border-color:
+    rgba(157,255,117,0.3);
+
+  box-shadow:
+    0 25px 70px
+    rgba(0,0,0,0.3);
+}
+
+
+.feature-card > span {
+  color:
+    #77927a;
+
+  font-size:
+    12px;
+}
+
+
+.feature-card h3 {
+  margin-top:
+    70px;
+
+  margin-bottom:
+    14px;
+
+  font-size:
+    23px;
+}
+
+
+.feature-card p {
+  color:
+    #7d897f;
+
+  line-height:
+    1.65;
+
+  font-size:
+    14px;
+}
+
+
+.feature-card svg {
+  position:
+    absolute;
+
+  right:
+    25px;
+
+  bottom:
+    25px;
+
+  color:
+    #9dff75;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer {
+  position:
+    relative;
+
+  z-index:
+    5;
+
+  padding:
+    30px 6%;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,0.06);
+
+  display:
+    flex;
+
+  justify-content:
+    center;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  color:
+    #7e8a81;
+
+  font-size:
+    13px;
+
+  background:
+    #050806;
+}
+
+
+footer svg {
+  color:
+    #9dff75;
+}
+
+
+footer span {
+  color:
+    #566159;
+}
+
+
+/* =========================================================
+   ANSWER PAGE
+========================================================= */
+
+.answer-page {
+  min-height:
+    100vh;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(90,255,70,0.08),
+      transparent 35%
+    ),
+    #050806;
+
+  color:
+    #f4f7f2;
+
+  padding-bottom:
+    80px;
+}
+
+
+.answer-navbar {
+  height:
+    76px;
+
+  padding:
+    0 6%;
+
+  border-bottom:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  position:
+    sticky;
+
+  top:
+    0;
+
+  background:
+    rgba(5,8,6,0.88);
+
+  backdrop-filter:
+    blur(20px);
+
+  z-index:
+    20;
+}
+
+
+.back-button {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  border:
+    0;
+
+  background:
+    transparent;
+
+  color:
+    #a8b4aa;
+
+  font-size:
+    14px;
+
+  transition:
+    0.25s;
+}
+
+
+.back-button:hover {
+  color:
+    #9dff75;
+}
+
+
+.answer-brand {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+}
+
+
+.answer-brand strong {
+  display:
+    block;
+
+  font-size:
+    15px;
+}
+
+
+.answer-brand span {
+  display:
+    block;
+
+  color:
+    #718074;
+
+  font-size:
+    11px;
+}
+
+
+.language-badge {
+  padding:
+    9px 14px;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.25);
+
+  border-radius:
+    30px;
+
+  color:
+    #a9ff89;
+
+  font-size:
+    13px;
+}
+
+
+.answer-header {
+  width:
+    min(1000px, 90%);
+
+  margin:
+    0 auto;
+
+  padding:
+    90px 0 45px;
+
+  text-align:
+    center;
+}
+
+
+.answer-header-badge {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  padding:
+    10px 16px;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.25);
+
+  border-radius:
+    30px;
+
+  color:
+    #9dff75;
+
+  font-size:
+    11px;
+
+  letter-spacing:
+    1.5px;
+}
+
+
+.answer-header h1 {
+  margin:
+    25px 0 35px;
+
+  font-size:
+    clamp(45px, 7vw, 82px);
+
+  line-height:
+    0.95;
+
+  letter-spacing:
+    -4px;
+}
+
+
+.answer-header h1 span {
+  color:
+    #9dff75;
+}
+
+
+.question-display {
+  width:
+    min(850px, 100%);
+
+  margin:
+    0 auto;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    14px;
+
+  padding:
+    20px 25px;
+
+  text-align:
+    left;
+
+  border:
+    1px solid
+    rgba(157,255,117,0.2);
+
+  border-radius:
+    18px;
+
+  background:
+    rgba(15,24,16,0.8);
+
+  color:
+    #dce5dc;
+
+  font-size:
+    16px;
+}
+
+
+.question-display svg {
+  flex-shrink:
+    0;
+
+  color:
+    #9dff75;
+}
+
+
+.answer-container {
+  width:
+    min(1000px, 90%);
+
+  margin:
+    0 auto;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap:
+    20px;
+}
+
+
+.answer-card {
+  padding:
+    28px;
+
+  border-radius:
+    22px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,28,21,0.95),
+      rgba(8,13,9,0.95)
+    );
+
+  box-shadow:
+    0 20px 70px
+    rgba(0,0,0,0.25);
+}
+
+
+.problem-card {
+  grid-column:
+    1 / -1;
+
+  border-color:
+    rgba(157,255,117,0.2);
+}
+
+
+.answer-card-title {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    13px;
+
+  margin-bottom:
+    20px;
+}
+
+
+.answer-card-title h3 {
+  margin:
+    0;
+
+  font-size:
+    20px;
+}
+
+
+.answer-icon {
+  width:
+    42px;
+
+  height:
+    42px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(157,255,117,0.08);
+
+  color:
+    #9dff75;
+}
+
+
+.answer-card-content {
+  color:
+    #aab6ac;
+
+  line-height:
+    1.75;
+
+  font-size:
+    15px;
+}
+
+
+.problem-text {
+  margin:
+    0;
+
+  color:
+    #dce4dd;
+
+  font-size:
+    17px;
+
+  line-height:
+    1.8;
+}
+
+
+/* Result / recommendation card */
+.result-card {
+  border-color: rgba(157,255,117,0.28);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(25,48,27,0.98),
+      rgba(7,16,9,0.96)
+    );
+}
+
+.result-card .answer-card-content {
+  color: #dcebdc;
+}
+
+/* Clear section labels inside answer cards */
+.answer-card[data-section="problem"] {
+  border-color: rgba(255,255,255,0.12);
+}
+
+.answer-card[data-section="precautions"] {
+  border-color: rgba(255,198,96,0.22);
+}
+
+.answer-card[data-section="result"] {
+  border-color: rgba(157,255,117,0.28);
+}
+
+
+.answer-list {
+  list-style:
+    none;
+
+  padding:
+    0;
+
+  margin:
+    0;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    13px;
+}
+
+
+.answer-list li {
+  display:
+    flex;
+
+  gap:
+    12px;
+
+  align-items:
+    flex-start;
+}
+
+
+.bullet {
+  width:
+    22px;
+
+  height:
+    22px;
+
+  flex-shrink:
+    0;
+
+  margin-top:
+    2px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(157,255,117,0.12);
+
+  color:
+    #9dff75;
+
+  font-size:
+    12px;
+}
+
+
+.source-list {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    12px;
+}
+
+
+.source-item {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    14px;
+
+  padding:
+    15px;
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(255,255,255,0.035);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.06);
+}
+
+
+.source-number {
+  width:
+    34px;
+
+  height:
+    34px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(157,255,117,0.1);
+
+  color:
+    #9dff75;
+
+  font-weight:
+    600;
+}
+
+
+.source-item strong {
+  display:
+    block;
+
+  color:
+    #dce5dd;
+
+  font-size:
+    14px;
+}
+
+
+.source-item span {
+  display:
+    block;
+
+  color:
+    #6e7b71;
+
+  font-size:
+    12px;
+
+  margin-top:
+    3px;
+}
+
+
+.no-information {
+  color:
+    #68746b;
+
+  margin:
+    0;
+}
+
+
+.answer-footer {
+  width:
+    min(1000px, 90%);
+
+  margin:
+    70px auto 0;
+
+  padding-top:
+    30px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    8px;
+
+  color:
+    #8b968d;
+
+  font-size:
+    13px;
+}
+
+
+.answer-footer svg {
+  color:
+    #9dff75;
+}
+
+
+.answer-footer span {
+  color:
+    #566158;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 850px) {
+
+  .nav-links {
+    display:
+      none;
+  }
+
+  .feature-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .answer-container {
+    grid-template-columns:
+      1fr;
+  }
+
+  .answer-card:nth-child(2),
+  .answer-card:nth-child(3),
+  .answer-card:nth-child(4) {
+    min-height: auto;
+  }
+
+  .problem-card {
+    grid-column:
+      auto;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .navbar {
+    padding:
+      0 20px;
+  }
+
+  .nav-button {
+    display:
+      none;
+  }
+
+  .language-select {
+    margin-left:
+      auto;
+
+    margin-right:
+      10px;
+  }
+
+  .hero {
+    min-height: 760px;
+
+    padding:
+      70px 18px 130px;
+  }
+
+  .hero h1 {
+    font-size:
+      52px;
+
+    letter-spacing:
+      -3px;
+  }
+
+  .hero p {
+    font-size:
+      14px;
+  }
+
+  .question-box {
+    height:
+      64px;
+  }
+
+  .question-icon {
+    width:
+      42px;
+
+    height:
+      42px;
+  }
+
+  .question-box button {
+    width:
+      48px;
+
+    height:
+      48px;
+  }
+
+  .trust-row {
+    gap:
+      15px;
+
+    flex-wrap:
+      wrap;
+
+    justify-content:
+      center;
+  }
+
+  .features {
+    padding:
+      80px 20px;
+  }
+
+  .feature-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .section-heading h2 {
+    letter-spacing:
+      -2px;
+  }
+
+  .answer-header {
+    padding:
+      60px 0 35px;
+  }
+
+  .answer-header h1 {
+    font-size:
+      48px;
+
+    letter-spacing:
+      -3px;
+  }
+
+  .answer-navbar {
+    padding:
+      0 18px;
+  }
+
+  .answer-brand {
+    display:
+      none;
+  }
+
+  .answer-card {
+    padding:
+      22px;
+  }
+
+  .farm-visual::before {
+    transform:
+      translateX(-50%)
+      scale(0.78)
+      perspective(700px)
+      rotateY(-8deg);
+  }
+
+  .farm-visual::after {
+    transform:
+      translateX(-50%)
+      scale(0.78)
+      perspective(700px)
+      rotateY(-8deg);
+  }
+
+  .farm-visual {
+    height: 1000px;
+  }
+
+  .scene-overlay {
+    height: 1000px;
+  }
+
+  .features {
+    margin-top: -50px;
+    padding-top: 170px;
+  }
+
+}
+
+/* =========================================================
+   CONTINUOUS EXISTING 3D FARM BACKGROUND
+   No new background / no gray overlay
+   ========================================================= */
+
+html,
+body,
+#root,
+.app {
+  background: transparent !important;
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: hidden !important;
+}
+
+.app {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Keep the EXISTING farm/3D scene behind the entire page. */
+.farm-visual,
+.scene {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+.farm-visual {
+  background:
+    linear-gradient(
+      180deg,
+      #050806 0%,
+      #0b1d10 22%,
+      #173d20 35%,
+      #173d20 62%,
+      #071009 100%
+    ) !important;
+}
+
+.scene canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Do NOT create another background over the farm. */
+.scene-overlay {
+  display: none !important;
+}
+
+/* Existing page content sits above the same farm scene. */
+.navbar,
+.hero,
+.features,
+.feature-section,
+.technology-section,
+.rag-section,
+.sources-section,
+footer {
+  position: relative !important;
+  z-index: 2 !important;
+  background: transparent !important;
+}
+
+/* Let the farm remain visible while scrolling through the page. */
+.hero,
+.features,
+.feature-section,
+.technology-section,
+.rag-section,
+.sources-section {
+  min-height: 100vh;
+}
+
+/* Cards remain readable without replacing the farm background. */
+.feature-card,
+.answer-card {
+  background: rgba(8, 15, 10, 0.78) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* Answer page also uses the same transparent background. */
+.answer-page {
+  position: relative;
+  min-height: 100vh;
+  background: transparent !important;
+}
+
+/* Keep answer navbar readable, but do not add a page background. */
+.answer-navbar {
+  background: rgba(5, 10, 6, 0.55) !important;
+}
+
+/* Footer stays over the existing farm scene. */
+footer {
+  background: transparent !important;
+}
+
+/* No artificial transition/gradient at the features boundary. */
+.features::before {
+  display: none !important;
+}
+
+/* =========================================================
+   VISIBLE FARM 3D ANIMATION
+   DO NOT CHANGE ANY LAYOUT
+   ========================================================= */
+
+/* Clouds slowly travel across the sky */
+.cloud-one {
+  animation: cloudMoveOne 14s ease-in-out infinite alternate;
+}
+
+.cloud-two {
+  animation: cloudMoveTwo 18s ease-in-out infinite alternate;
+}
+
+@keyframes cloudMoveOne {
+  0% {
+    transform: translateX(-80px);
+  }
+
+  100% {
+    transform: translateX(140px);
+  }
+}
+
+@keyframes cloudMoveTwo {
+  0% {
+    transform: translateX(100px);
+  }
+
+  100% {
+    transform: translateX(-120px);
+  }
+}
+
+
+/* Sun gently breathes */
+.sun {
+  animation: sunPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes sunPulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+
+/* Mountains slowly move for depth */
+.hill-back {
+  animation: backMountain 8s ease-in-out infinite alternate;
+}
+
+@keyframes backMountain {
+  0% {
+    transform: rotateX(12deg) translateY(5px);
+  }
+
+  100% {
+    transform: rotateX(12deg) translateY(-10px);
+  }
+}
+
+.hill-front {
+  animation: frontMountain 7s ease-in-out infinite alternate;
+}
+
+@keyframes frontMountain {
+  0% {
+    transform: rotateX(18deg) translateY(3px);
+  }
+
+  100% {
+    transform: rotateX(18deg) translateY(-8px);
+  }
+}
+
+
+/* =========================================================
+   FARM CROPS — WIND EFFECT
+   ========================================================= */
+
+.plant {
+  animation: cropWind 2.8s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+
+@keyframes cropWind {
+  0% {
+    transform: rotate(-3deg);
+  }
+
+  50% {
+    transform: rotate(2deg);
+  }
+
+  100% {
+    transform: rotate(4deg);
+  }
+}
+
+
+/* Different rows move at different speeds */
+.plant:nth-child(2n) {
+  animation-delay: -0.8s;
+}
+
+.plant:nth-child(3n) {
+  animation-delay: -1.4s;
+  animation-duration: 3.4s;
+}
+
+.plant:nth-child(4n) {
+  animation-delay: -2s;
+  animation-duration: 2.4s;
+}
+
+.plant:nth-child(5n) {
+  animation-delay: -0.4s;
+  animation-duration: 3.8s;
+}
+
+
+/* =========================================================
+   FLOATING PARTICLES
+   ========================================================= */
+
+.particle-one {
+  animation: particleOne 3s ease-in-out infinite alternate;
+}
+
+.particle-two {
+  animation: particleTwo 4s ease-in-out infinite alternate;
+}
+
+.particle-three {
+  animation: particleThree 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes particleOne {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(25px, -25px);
+  }
+}
+
+@keyframes particleTwo {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(-20px, 20px);
+  }
+}
+
+@keyframes particleThree {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(15px, -30px);
+  }
+}
+
+/* =========================================================
+   FARMER-FOCUSED 3D TRACTOR — ADDITIVE ONLY
+   Existing sky, mountain, field, navbar and hero are untouched.
+   ========================================================= */
+
+.tractor-3d {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  width: 150px;
+  height: 90px;
+  z-index: 2;
+  pointer-events: none;
+  transform-style: preserve-3d;
+  perspective: 900px;
+  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.42));
+}
+
+.tractor-body {
+  position: relative;
+  width: 150px;
+  height: 78px;
+  transform-style: preserve-3d;
+  transform: rotateX(8deg) rotateY(-8deg);
+}
+
+.tractor-body::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  width: 105px;
+  height: 38px;
+  border-radius: 10px 16px 8px 8px;
+  background: linear-gradient(145deg, #b9ff79, #4b8f35 72%);
+  border: 1px solid rgba(220, 255, 190, 0.32);
+  box-shadow:
+    inset 0 5px 8px rgba(255,255,255,0.16),
+    8px 10px 0 rgba(20, 55, 22, 0.35);
+  transform: translateZ(12px);
+}
+
+.tractor-cabin {
+  position: absolute;
+  left: 49px;
+  top: 2px;
+  width: 58px;
+  height: 48px;
+  border: 4px solid #6ca653;
+  border-bottom-width: 5px;
+  border-radius: 9px 9px 3px 3px;
+  background: linear-gradient(135deg, rgba(205,255,225,0.78), rgba(35,83,45,0.8));
+  box-shadow:
+    inset 0 0 14px rgba(200,255,220,0.25),
+    8px 6px 0 rgba(8, 28, 12, 0.35);
+  transform: translateZ(18px);
+}
+
+.tractor-cabin::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 40px;
+  height: 29px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(235,255,242,0.55), rgba(75,126,82,0.25));
+}
+
+.tractor-cabin span {
+  position: absolute;
+  right: 6px;
+  top: 7px;
+  width: 5px;
+  height: 24px;
+  border-radius: 3px;
+  background: rgba(230,255,225,0.5);
+}
+
+.tractor-hood {
+  position: absolute;
+  left: 102px;
+  top: 26px;
+  width: 39px;
+  height: 26px;
+  border-radius: 7px 10px 5px 5px;
+  background: linear-gradient(145deg, #9fe968, #3d7830);
+  transform: translateZ(16px);
+}
+
+.tractor-exhaust {
+  position: absolute;
+  left: 110px;
+  top: 11px;
+  width: 6px;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #263e29, #111c13);
+  transform: translateZ(20px);
+}
+
+.tractor-exhaust::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  left: -2px;
+  top: -7px;
+  border-radius: 50%;
+  background: rgba(210, 255, 190, 0.18);
+  box-shadow: 0 -10px 0 rgba(210,255,190,0.08);
+  animation: tractorSmoke 2.8s ease-out infinite;
+}
+
+@keyframes tractorSmoke {
+  0% { opacity: 0; transform: translateY(5px) scale(0.65); }
+  30% { opacity: 0.55; }
+  100% { opacity: 0; transform: translateY(-24px) translateX(10px) scale(1.45); }
+}
+
+.tractor-wheel {
+  position: absolute;
+  bottom: 3px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 35%,
+    #6c8a62 0 12%,
+    #1a291b 14% 62%,
+    #0a110b 64%
+  );
+  border: 4px solid #111a12;
+  box-shadow:
+    inset 0 0 0 3px rgba(157,255,117,0.12),
+    7px 8px 0 rgba(0,0,0,0.25);
+  transform: translateZ(22px);
+}
+
+.tractor-wheel-back {
+  left: 28px;
+  width: 39px;
+  height: 39px;
+}
+
+.tractor-wheel-front {
+  left: 104px;
+  width: 27px;
+  height: 27px;
+  bottom: 5px;
+}
+
+.tractor-3d::after {
+  content: "";
+  position: absolute;
+  left: 25px;
+  bottom: 0;
+  width: 105px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.32);
+  filter: blur(7px);
+  transform: rotateX(70deg) translateZ(-8px);
+}
+
+/* Clearer depth movement — no layout changes. */
+.hill-back {
+  animation:
+    backMountain 8s ease-in-out infinite alternate,
+    mountainBreathBack 5s ease-in-out infinite alternate;
+}
+
+.hill-front {
+  animation:
+    frontMountain 7s ease-in-out infinite alternate,
+    mountainBreathFront 6s ease-in-out infinite alternate;
+}
+
+@keyframes mountainBreathBack {
+  0% { margin-left: -4px; }
+  100% { margin-left: 4px; }
+}
+
+@keyframes mountainBreathFront {
+  0% { margin-left: 3px; }
+  100% { margin-left: -3px; }
+}
+
+.crop-grid {
+  animation: fieldDepth 10s ease-in-out infinite alternate;
+  transform-origin: center bottom;
+}
+
+@keyframes fieldDepth {
+  0% { transform: perspective(700px) rotateX(-5deg) translateZ(0); }
+  100% { transform: perspective(700px) rotateX(-5deg) translateZ(18px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tractor-3d,
+  .cloud-one,
+  .cloud-two,
+  .sun,
+  .hill-back,
+  .hill-front,
+  .plant,
+  .crop-grid {
+    animation: none !important;
+  }
+}
+app css
+
+
+/* =========================================================
+   REALISTIC PADDY FARM BACKGROUND — FINAL OVERRIDE
+   Keeps the existing Farmer AI UI and functionality unchanged.
+   Removes the old CSS-generated plants/hills/farm ground and
+   replaces them with a realistic sunrise rice-paddy photograph.
+   ========================================================= */
+
+html,
+body,
+#root,
+.app {
+  background: transparent !important;
+}
+
+.app {
+  position: relative !important;
+  min-height: 100vh !important;
+}
+
+/* Full-screen realistic paddy field */
+.farm-visual {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(5, 20, 13, 0.58) 0%,
+      rgba(7, 32, 19, 0.30) 24%,
+      rgba(7, 35, 18, 0.12) 48%,
+      rgba(3, 18, 10, 0.48) 100%
+    ),
+    url("https://images.pexels.com/photos/36914816/pexels-photo-36914816.jpeg?auto=compress&cs=tinysrgb&w=2400") !important;
+
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+
+  transform: translateZ(0);
+  will-change: background-position;
+  animation: paddyBackgroundDrift 22s ease-in-out infinite alternate;
+}
+
+/* Soft cinematic light over the real photograph */
+.farm-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 78% 20%,
+      rgba(255, 221, 142, 0.48) 0,
+      rgba(255, 193, 92, 0.20) 10%,
+      rgba(255, 166, 70, 0.07) 24%,
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(4, 17, 11, 0.10) 0%,
+      transparent 42%,
+      rgba(2, 14, 8, 0.48) 100%
+    );
+}
+
+/* Animated warm sunlight / atmospheric haze */
+.farm-visual::after {
+  content: "";
+  position: absolute;
+  width: 48vw;
+  height: 48vw;
+  max-width: 760px;
+  max-height: 760px;
+  right: -10vw;
+  top: -14vw;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 232, 168, 0.22) 0%,
+      rgba(255, 198, 105, 0.11) 24%,
+      rgba(255, 171, 77, 0.04) 46%,
+      transparent 70%
+    );
+
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  animation: sunlightBreath 7s ease-in-out infinite alternate;
+}
+
+/* Remove the old artificial farm elements */
+.farm-visual > .sky-glow,
+.farm-visual > .sun,
+.farm-visual > .cloud,
+.farm-visual > .hill,
+.farm-visual > .farm-ground,
+.farm-visual > .farm-particle,
+.farm-visual .crop-grid,
+.farm-visual .plant,
+.farm-visual .tractor-3d {
+  display: none !important;
+}
+
+/* Do not allow the old overlay to cover the photograph */
+.scene-overlay {
+  display: none !important;
+}
+
+/* Keep all existing page content above the photograph */
+.navbar,
+.hero,
+.features,
+.feature-section,
+.technology-section,
+.rag-section,
+.sources-section,
+footer,
+.answer-page {
+  position: relative !important;
+  z-index: 5 !important;
+  background: transparent !important;
+}
+
+/* Preserve readability while showing the real field */
+.hero {
+  text-shadow: 0 3px 22px rgba(0, 0, 0, 0.42);
+}
+
+.hero h1,
+.hero p,
+.hero-badge,
+.trust-row,
+.hint {
+  position: relative;
+  z-index: 6;
+}
+
+/* Glass input remains unchanged in structure */
+.question-box {
+  position: relative;
+  z-index: 7;
+}
+
+/* Keep lower sections on the same continuous paddy background */
+.features {
+  background: transparent !important;
+}
+
+footer {
+  background: transparent !important;
+}
+
+/* Subtle camera movement — gives the photograph depth without
+   adding fake plants, hills, trees, or cartoon objects. */
+@keyframes paddyBackgroundDrift {
+  0% {
+    background-position: 48% 48%;
+  }
+
+  50% {
+    background-position: 52% 50%;
+  }
+
+  100% {
+    background-position: 49% 52%;
+  }
+}
+
+@keyframes sunlightBreath {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.92) translate3d(0, 0, 0);
+  }
+
+  100% {
+    opacity: 0.95;
+    transform: scale(1.08) translate3d(-18px, 12px, 0);
+  }
+}
+
+/* Keep mobile crop natural */
+@media (max-width: 900px) {
+  .farm-visual {
+    background-position: 55% center !important;
+  }
+
+  .farm-visual::after {
+    width: 80vw;
+    height: 80vw;
+    right: -22vw;
+    top: -10vw;
+  }
+}
+
+@media (max-width: 640px) {
+  .farm-visual {
+    background-position: 58% center !important;
+  }
+
+  .farm-visual::before {
+    background:
+      radial-gradient(
+        circle at 75% 20%,
+        rgba(255, 221, 142, 0.40) 0,
+        rgba(255, 193, 92, 0.14) 18%,
+        transparent 42%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(4, 17, 11, 0.18) 0%,
+        transparent 40%,
+        rgba(2, 14, 8, 0.52) 100%
+      );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-visual,
+  .farm-visual::after {
+    animation: none !important;
+  }
+}
