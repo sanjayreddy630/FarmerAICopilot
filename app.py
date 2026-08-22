@@ -5,9 +5,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
-from llm.answer_engine import FarmerAICopilot
-
-
 # Add project root to Python path
 PROJECT_ROOT = os.path.dirname(
     os.path.abspath(__file__)
@@ -68,7 +65,32 @@ CORS(app)
 # COPILOT
 # ============================================================
 
-copilot = FarmerAICopilot()
+copilot = None
+
+
+def get_copilot():
+
+    global copilot
+
+    if copilot is None:
+
+        try:
+            from llm.answer_engine import FarmerAICopilot
+
+            copilot = FarmerAICopilot()
+
+            print("Groq/RAG Copilot loaded on demand")
+
+        except Exception as e:
+
+            print(
+                "⚠️ Groq/RAG Copilot unavailable:",
+                e
+            )
+
+            raise
+
+    return copilot
 
 
 # ============================================================
@@ -239,7 +261,7 @@ def ask():
             question_for_ai = question
 
 
-        result = copilot.ask(
+        result = get_copilot().ask(
             question_for_ai
         )
 
@@ -709,6 +731,15 @@ if __name__ == "__main__":
 
     print(
         "Pest model:"
+    )
+
+    print(
+        "AVAILABLE (lazy-loaded)"
+    )
+
+    print()
+    print(
+        "Groq/RAG:"
     )
 
     print(
