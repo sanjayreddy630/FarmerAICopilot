@@ -846,15 +846,7 @@ export default function App() {
           : "en";
   }, [language]);
 
-  useEffect(() => {
-    return () => {
-      if (selectedFilePreview) {
-        URL.revokeObjectURL(selectedFilePreview);
-      }
-    };
-  }, [selectedFilePreview]);
-
-  const [uploading, setUploading] =
+    const [uploading, setUploading] =
     useState(false);
 
   const [uploadedFile, setUploadedFile] =
@@ -866,8 +858,17 @@ export default function App() {
   const [selectedFilePreview, setSelectedFilePreview] =
     useState("");
 
+  useEffect(() => {
+    return () => {
+      if (selectedFilePreview) {
+        URL.revokeObjectURL(selectedFilePreview);
+      }
+    };
+  }, [selectedFilePreview]);
+
   const [cameraOpen, setCameraOpen] =
-    useState(false);
+    useState(false); 
+  
 
   const [cameraStream, setCameraStream] =
     useState(null);
