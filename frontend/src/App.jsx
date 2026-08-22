@@ -846,11 +846,25 @@ export default function App() {
           : "en";
   }, [language]);
 
+  useEffect(() => {
+    return () => {
+      if (selectedFilePreview) {
+        URL.revokeObjectURL(selectedFilePreview);
+      }
+    };
+  }, [selectedFilePreview]);
+
   const [uploading, setUploading] =
     useState(false);
 
   const [uploadedFile, setUploadedFile] =
     useState(null);
+
+  const [selectedFile, setSelectedFile] =
+    useState(null);
+
+  const [selectedFilePreview, setSelectedFilePreview] =
+    useState("");
 
   const [cameraOpen, setCameraOpen] =
     useState(false);
@@ -1061,6 +1075,14 @@ export default function App() {
   ======================================================= */
 
   async function askFarmerAI() {
+    if (
+      selectedFile &&
+      selectedFile.type?.startsWith("image/")
+    ) {
+      await analyzeSelectedImage();
+      return;
+    }
+
     if (!question.trim()) {
       return;
     }
@@ -1147,8 +1169,121 @@ export default function App() {
   }
 
   /* =======================================================
+     SELECTED IMAGE ANALYSIS
+     ======================================================= */
+
+  async function analyzeSelectedImage() {
+    if (
+      !selectedFile ||
+      !selectedFile.type?.startsWith("image/")
+    ) {
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        selectedFile
+      );
+
+      const response =
+        await fetch(
+          "https://farmer-ai-backend-4gfg.onrender.com/api/analyze-image",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error ||
+            ui(language, "imageFailed")
+        );
+      }
+
+      const pest =
+        data.prediction?.pest ||
+        ui(language, "unknownPest");
+
+      let knowledge = null;
+
+      try {
+        const farmerQuestion =
+          question.trim();
+
+        const infoResponse =
+          await fetch(
+            "https://farmer-ai-backend-4gfg.onrender.com/api/ask",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                question:
+                  farmerQuestion
+                    ? `The uploaded crop image was analyzed and predicted "${pest}". The farmer also asked: "${farmerQuestion}". Explain what this pest/disease could be, how the farmer can verify it, what precautions to take, what control measures are recommended, and provide the available agricultural sources.`
+                    : `The uploaded crop image was analyzed and predicted "${pest}". Explain what this pest/disease is, how a farmer can verify it, what precautions to take, what control measures are recommended, and provide the available agricultural sources.`,
+                language,
+              }),
+            }
+          );
+
+        const infoData =
+          await infoResponse.json();
+
+        if (infoResponse.ok) {
+          knowledge = infoData;
+        }
+      } catch (error) {
+        console.warn(
+          "Could not retrieve additional RAG information:",
+          error
+        );
+      }
+
+      setUploadedFile({
+        filename: selectedFile.name,
+        success: true,
+      });
+
+      setCameraResult({
+        prediction: data.prediction,
+        topPredictions:
+          data.top_predictions || [],
+        confidenceLevel:
+          data.confidence_level || "Low",
+        knowledge,
+      });
+
+    } catch (error) {
+      console.error(
+        "Image analysis error:",
+        error
+      );
+
+      alert(
+        error.message ||
+          ui(language, "imageFailed")
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  /* =======================================================
      FILE UPLOAD
-  ======================================================= */
+     ======================================================= */
 
   async function handleFileUpload(e) {
     const file =
@@ -1158,6 +1293,30 @@ export default function App() {
       return;
     }
 
+    /*
+     * Keep the selected file in the frontend first.
+     * Images are shown as a preview and are analyzed
+     * only when the farmer presses the send button.
+     */
+    setSelectedFile(file);
+    setUploadedFile(null);
+
+    if (file.type?.startsWith("image/")) {
+      const previewUrl =
+        URL.createObjectURL(file);
+
+      setSelectedFilePreview(
+        previewUrl
+      );
+
+      e.target.value = "";
+      return;
+    }
+
+    /*
+     * Non-image files continue to use
+     * the normal document upload API.
+     */
     setUploading(true);
 
     try {
@@ -1189,6 +1348,8 @@ export default function App() {
       }
 
       setUploadedFile(data);
+      setSelectedFile(null);
+      setSelectedFilePreview("");
 
       console.log(
         "Uploaded file:",
@@ -1206,12 +1367,16 @@ export default function App() {
           ui(language, "uploadUnable")
       );
 
+      setSelectedFile(null);
+      setSelectedFilePreview("");
+
     } finally {
       setUploading(false);
 
       e.target.value = "";
     }
   }
+
 
   /* =======================================================
      VOICE INPUT
@@ -1783,7 +1948,9 @@ export default function App() {
             }
             disabled={
               loading ||
-              !question.trim()
+              uploading ||
+              (!question.trim() &&
+                !selectedFile)
             }
             whileHover={{
               scale: 1.08,
@@ -1793,7 +1960,7 @@ export default function App() {
               scale: 0.92,
             }}
           >
-            {loading ? (
+            {loading || uploading ? (
               "..."
             ) : (
               <ArrowUpRight
@@ -1820,8 +1987,87 @@ export default function App() {
           </div>
         )}
 
-        {uploadedFile &&
+        {selectedFile &&
+          selectedFile.type?.startsWith("image/") &&
           !uploading && (
+            <div
+              style={{
+                width: "min(92vw, 760px)",
+                margin: "16px auto 0",
+                padding: "14px",
+                borderRadius: "18px",
+                background: "rgba(8, 20, 10, 0.78)",
+                border: "1px solid rgba(150, 255, 90, 0.28)",
+                backdropFilter: "blur(12px)",
+                boxSizing: "border-box",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  marginBottom: "12px",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                }}
+              >
+                <span>
+                  📎 {selectedFile.name}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setSelectedFilePreview("");
+                    setUploadedFile(null);
+                  }}
+                  style={{
+                    border: "0",
+                    background: "transparent",
+                    color: "#b9ff79",
+                    cursor: "pointer",
+                    fontSize: "20px",
+                    lineHeight: 1,
+                  }}
+                  aria-label="Remove selected image"
+                >
+                  ×
+                </button>
+              </div>
+
+              {selectedFilePreview && (
+                <img
+                  src={selectedFilePreview}
+                  alt="Selected crop"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxHeight: "320px",
+                    objectFit: "contain",
+                    borderRadius: "14px",
+                    background: "rgba(0, 0, 0, 0.25)",
+                  }}
+                />
+              )}
+
+              <div
+                style={{
+                  marginTop: "10px",
+                  color: "#cfe9c0",
+                  fontSize: "13px",
+                }}
+              >
+                Image ready. Press the arrow button to analyze it.
+              </div>
+            </div>
+          )}
+
+        {uploadedFile &&
+          !uploading &&
+          !selectedFile?.type?.startsWith("image/") && (
             <div className="upload-status">
               📎{" "}
               {uploadedFile.filename}
@@ -2139,4 +2385,3 @@ function Feature({
     </motion.div>
   );
 }
-
