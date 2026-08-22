@@ -963,7 +963,7 @@ export default function App() {
       formData.append("file", blob, "farmer-camera.jpg");
 
       const response = await fetch(
-        "http://127.0.0.1:5000/api/analyze-image",
+        "https://farmer-ai-backend-4gfg.onrender.com/api/analyze-image",
         {
           method: "POST",
           body: formData,
@@ -985,7 +985,7 @@ export default function App() {
 
       try {
         const infoResponse = await fetch(
-          "http://127.0.0.1:5000/api/ask",
+          "https://farmer-ai-backend-4gfg.onrender.com/api/ask",
           {
             method: "POST",
             headers: {
@@ -1069,7 +1069,7 @@ export default function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/ask",
+        "https://farmer-ai-backend-4gfg.onrender.com/api/ask",
         {
           method: "POST",
 
@@ -1171,7 +1171,7 @@ export default function App() {
 
       const response =
         await fetch(
-          "http://127.0.0.1:5000/api/upload",
+          "https://farmer-ai-backend-4gfg.onrender.com/api/upload",
           {
             method: "POST",
             body: formData,
