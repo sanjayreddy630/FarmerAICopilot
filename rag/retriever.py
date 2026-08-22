@@ -1,17 +1,42 @@
 import json
+import os
 import re
 from pathlib import Path
 
-import faiss
-import numpy as np
 from rank_bm25 import BM25Okapi
-from sentence_transformers import SentenceTransformer
 
+
+# =========================================================
+# PATHS
+# =========================================================
 
 INDEX_DIR = Path("rag/index")
 
 FAISS_PATH = INDEX_DIR / "farming.index"
 CHUNKS_PATH = INDEX_DIR / "chunks.json"
+
+
+# =========================================================
+# MEMORY-SAFE CONFIGURATION
+# =========================================================
+
+# IMPORTANT:
+# Keep dense retrieval OFF on low-memory deployment servers.
+#
+# Render Free = 512 MB RAM.
+# SentenceTransformer + Torch + SciPy can exceed that limit.
+#
+# To enable locally:
+#   $env:ENABLE_DENSE_RETRIEVAL="true"
+#
+ENABLE_DENSE_RETRIEVAL = (
+    os.getenv(
+        "ENABLE_DENSE_RETRIEVAL",
+        "false"
+    ).lower()
+    == "true"
+)
+
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 
@@ -21,6 +46,7 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 # =========================================================
 
 SYNONYMS = {
+
     "yellow": [
         "yellow",
         "yellowing",
@@ -98,6 +124,10 @@ SYNONYMS = {
 }
 
 
+# =========================================================
+# TEXT NORMALIZATION
+# =========================================================
+
 def normalize_text(text: str) -> str:
 
     text = text.lower()
@@ -117,6 +147,10 @@ def normalize_text(text: str) -> str:
     return text.strip()
 
 
+# =========================================================
+# QUERY EXPANSION
+# =========================================================
+
 def expand_query(query: str) -> str:
 
     normalized = normalize_text(query)
@@ -127,9 +161,13 @@ def expand_query(query: str) -> str:
 
         if key in normalized:
 
-            terms.extend(synonyms)
+            terms.extend(
+                synonyms
+            )
 
-    # Common farming phrase expansion
+    # -----------------------------------------------------
+    # Rice yellowing
+    # -----------------------------------------------------
 
     if (
         "yellow" in normalized
@@ -153,6 +191,10 @@ def expand_query(query: str) -> str:
             "precautions",
         ])
 
+    # -----------------------------------------------------
+    # Action questions
+    # -----------------------------------------------------
+
     if "what should i do" in normalized:
 
         terms.extend([
@@ -174,19 +216,19 @@ class HybridRetriever:
 
     def __init__(self):
 
-        print("Loading farming knowledge base...")
-
-        # ---------------------------------------------
-        # FAISS
-        # ---------------------------------------------
-
-        self.index = faiss.read_index(
-            str(FAISS_PATH)
+        print(
+            "Loading farming knowledge base..."
         )
 
-        # ---------------------------------------------
-        # CHUNKS
-        # ---------------------------------------------
+        # -------------------------------------------------
+        # LOAD CHUNKS
+        # -------------------------------------------------
+
+        if not CHUNKS_PATH.exists():
+
+            raise FileNotFoundError(
+                f"Chunks file not found: {CHUNKS_PATH}"
+            )
 
         with open(
             CHUNKS_PATH,
@@ -196,24 +238,19 @@ class HybridRetriever:
 
             self.chunks = json.load(file)
 
-        # ---------------------------------------------
-        # EMBEDDING MODEL
-        # ---------------------------------------------
-
-        self.model = SentenceTransformer(
-            MODEL_NAME
-        )
-
-        # ---------------------------------------------
+        # -------------------------------------------------
         # BM25 CORPUS
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         self.corpus = []
 
         for chunk in self.chunks:
 
             text = normalize_text(
-                chunk.get("text", "")
+                chunk.get(
+                    "text",
+                    ""
+                )
             )
 
             self.corpus.append(
@@ -223,6 +260,65 @@ class HybridRetriever:
         self.bm25 = BM25Okapi(
             self.corpus
         )
+
+        # -------------------------------------------------
+        # DENSE RETRIEVAL
+        # -------------------------------------------------
+
+        self.index = None
+        self.model = None
+
+        if ENABLE_DENSE_RETRIEVAL:
+
+            print(
+                "Dense retrieval enabled."
+            )
+
+            try:
+
+                import faiss
+
+                from sentence_transformers import (
+                    SentenceTransformer
+                )
+
+                if not FAISS_PATH.exists():
+
+                    raise FileNotFoundError(
+                        f"FAISS index not found: {FAISS_PATH}"
+                    )
+
+                self.index = faiss.read_index(
+                    str(FAISS_PATH)
+                )
+
+                self.model = SentenceTransformer(
+                    MODEL_NAME
+                )
+
+                print(
+                    f"Dense model loaded: {MODEL_NAME}"
+                )
+
+            except Exception as e:
+
+                print(
+                    "Dense retrieval unavailable."
+                )
+
+                print(
+                    f"Reason: {e}"
+                )
+
+                self.index = None
+                self.model = None
+
+        else:
+
+            print(
+                "Dense retrieval disabled "
+                "(memory-safe mode)."
+            )
 
         print(
             f"Knowledge base loaded: "
@@ -239,6 +335,15 @@ class HybridRetriever:
         query: str,
         top_k: int = 10
     ):
+
+        if (
+            self.index is None
+            or self.model is None
+        ):
+
+            return []
+
+        import numpy as np
 
         query_embedding = self.model.encode(
             [query],
@@ -274,7 +379,9 @@ class HybridRetriever:
                 score
             )
 
-            results.append(chunk)
+            results.append(
+                chunk
+            )
 
         return results
 
@@ -301,13 +408,16 @@ class HybridRetriever:
             tokens
         )
 
-        top_indices = np.argsort(
-            scores
-        )[::-1][:top_k]
+        # Avoid NumPy dependency here.
+        ranked_indices = sorted(
+            range(len(scores)),
+            key=lambda i: scores[i],
+            reverse=True
+        )
 
         results = []
 
-        for index in top_indices:
+        for index in ranked_indices[:top_k]:
 
             if scores[index] <= 0:
                 continue
@@ -318,7 +428,9 @@ class HybridRetriever:
                 scores[index]
             )
 
-            results.append(chunk)
+            results.append(
+                chunk
+            )
 
         return results
 
@@ -345,6 +457,39 @@ class HybridRetriever:
             expanded_query
         )
 
+        # -------------------------------------------------
+        # MEMORY-SAFE MODE
+        # -------------------------------------------------
+
+        if (
+            self.index is None
+            or self.model is None
+        ):
+
+            print(
+                "Using BM25 keyword retrieval."
+            )
+
+            results = self.keyword_search(
+                expanded_query,
+                top_k=top_k
+            )
+
+            for rank, result in enumerate(
+                results,
+                start=1
+            ):
+
+                result["hybrid_score"] = round(
+                    1.0 / rank,
+                    4
+                )
+
+            return results
+
+        # -------------------------------------------------
+        # FULL HYBRID MODE
+        # -------------------------------------------------
 
         dense_results = self.dense_search(
             expanded_query,
@@ -356,13 +501,11 @@ class HybridRetriever:
             top_k=top_k * 3
         )
 
-
         combined = {}
 
-
-        # ---------------------------------------------
+        # -------------------------------------------------
         # DENSE RANK
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         for rank, result in enumerate(
             dense_results
@@ -386,10 +529,9 @@ class HybridRetriever:
                 0.55 / (rank + 1)
             )
 
-
-        # ---------------------------------------------
+        # -------------------------------------------------
         # BM25 RANK
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         for rank, result in enumerate(
             keyword_results
@@ -413,10 +555,9 @@ class HybridRetriever:
                 0.45 / (rank + 1)
             )
 
-
-        # ---------------------------------------------
+        # -------------------------------------------------
         # SORT
-        # ---------------------------------------------
+        # -------------------------------------------------
 
         ranked = sorted(
             combined.values(),
@@ -424,9 +565,7 @@ class HybridRetriever:
             reverse=True
         )
 
-
         final_results = []
-
 
         for item in ranked[:top_k]:
 
@@ -445,7 +584,6 @@ class HybridRetriever:
                 chunk
             )
 
-
         return final_results
 
 
@@ -456,7 +594,6 @@ class HybridRetriever:
 if __name__ == "__main__":
 
     retriever = HybridRetriever()
-
 
     queries = [
 
@@ -470,11 +607,11 @@ if __name__ == "__main__":
 
     ]
 
-
     for query in queries:
 
-        print("\n")
-        print("=" * 70)
+        print(
+            "\n" + "=" * 70
+        )
 
         print(
             "QUERY:"
@@ -484,21 +621,23 @@ if __name__ == "__main__":
             query
         )
 
-        print("=" * 70)
-
+        print(
+            "=" * 70
+        )
 
         results = retriever.hybrid_search(
             query,
             top_k=5
         )
 
-
         for i, result in enumerate(
             results,
             start=1
         ):
 
-            print("\n" + "-" * 70)
+            print(
+                "\n" + "-" * 70
+            )
 
             print(
                 f"RESULT {i}"
@@ -519,7 +658,9 @@ if __name__ == "__main__":
                 f"{result.get('hybrid_score', 0):.4f}"
             )
 
-            print("\nText:")
+            print(
+                "\nText:"
+            )
 
             print(
                 result.get(

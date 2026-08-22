@@ -1,13 +1,6 @@
 import os
 from typing import List, Dict
 
-from rag.retriever import HybridRetriever
-
-
-RERANKER_MODEL = (
-    "cross-encoder/ms-marco-MiniLM-L-6-v2"
-)
-
 
 # =========================================================
 # CONFIGURATION
@@ -16,9 +9,13 @@ RERANKER_MODEL = (
 ENABLE_RERANKER = (
     os.getenv(
         "ENABLE_RERANKER",
-        "true"
+        "false"
     ).lower()
     == "true"
+)
+
+RERANKER_MODEL = (
+    "cross-encoder/ms-marco-MiniLM-L-6-v2"
 )
 
 
@@ -30,31 +27,47 @@ class FarmingReranker:
 
     def __init__(self):
 
+        self.model = None
+
         if not ENABLE_RERANKER:
 
-            self.model = None
-
             print(
-                "Reranker disabled."
+                "Reranker disabled "
+                "(memory-safe mode)."
             )
 
             return
-
 
         print(
             "Loading reranker..."
         )
 
-        from sentence_transformers import CrossEncoder
+        try:
 
-        self.model = CrossEncoder(
-            RERANKER_MODEL
-        )
+            from sentence_transformers import (
+                CrossEncoder
+            )
 
-        print(
-            f"Reranker loaded: "
-            f"{RERANKER_MODEL}"
-        )
+            self.model = CrossEncoder(
+                RERANKER_MODEL
+            )
+
+            print(
+                f"Reranker loaded: "
+                f"{RERANKER_MODEL}"
+            )
+
+        except Exception as e:
+
+            print(
+                "Reranker unavailable."
+            )
+
+            print(
+                f"Reason: {e}"
+            )
+
+            self.model = None
 
 
     def rerank(
@@ -68,15 +81,13 @@ class FarmingReranker:
 
             return []
 
-
         # -------------------------------------------------
-        # RERANKING DISABLED
+        # DISABLED / FAILED
         # -------------------------------------------------
 
         if self.model is None:
 
             return candidates[:top_k]
-
 
         # -------------------------------------------------
         # CROSS ENCODER
@@ -96,14 +107,11 @@ class FarmingReranker:
 
         ]
 
-
         scores = self.model.predict(
             pairs
         )
 
-
         ranked = []
-
 
         for candidate, score in zip(
             candidates,
@@ -120,19 +128,14 @@ class FarmingReranker:
                 result
             )
 
-
         ranked.sort(
-
             key=lambda x:
                 x.get(
                     "rerank_score",
                     0
                 ),
-
             reverse=True
-
         )
-
 
         return ranked[:top_k]
 
@@ -148,30 +151,28 @@ def retrieve_and_rerank(
 ):
 
     # -----------------------------------------------------
-    # HYBRID RETRIEVER
+    # Lazy import
     # -----------------------------------------------------
 
-    retriever = HybridRetriever()
+    from rag.retriever import (
+        HybridRetriever
+    )
 
+    retriever = HybridRetriever()
 
     # -----------------------------------------------------
     # RETRIEVE
     # -----------------------------------------------------
 
     candidates = retriever.hybrid_search(
-
         query,
-
         top_k=candidate_k
-
     )
-
 
     print(
         f"\nCandidates retrieved: "
         f"{len(candidates)}"
     )
-
 
     # -----------------------------------------------------
     # RERANK
@@ -179,23 +180,16 @@ def retrieve_and_rerank(
 
     reranker = FarmingReranker()
 
-
     results = reranker.rerank(
-
         query,
-
         candidates,
-
         top_k=final_k
-
     )
-
 
     print(
         f"After reranking: "
         f"{len(results)}"
     )
-
 
     return results
 
@@ -216,12 +210,11 @@ if __name__ == "__main__":
 
     ]
 
-
     for query in queries:
 
-        print("\n")
-
-        print("=" * 70)
+        print(
+            "\n" + "=" * 70
+        )
 
         print(
             "QUERY:"
@@ -231,26 +224,19 @@ if __name__ == "__main__":
             query
         )
 
-        print("=" * 70)
-
-
-        results = retrieve_and_rerank(
-
-            query,
-
-            candidate_k=20,
-
-            final_k=5
-
+        print(
+            "=" * 70
         )
 
+        results = retrieve_and_rerank(
+            query,
+            candidate_k=20,
+            final_k=5
+        )
 
         for i, result in enumerate(
-
             results,
-
             start=1
-
         ):
 
             print(
@@ -281,7 +267,9 @@ if __name__ == "__main__":
                 f"{result.get('rerank_score', 0):.4f}"
             )
 
-            print("\nText:")
+            print(
+                "\nText:"
+            )
 
             print(
                 result.get(
