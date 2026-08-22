@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 
 from llm.answer_engine import FarmerAICopilot
 
+
 # Add project root to Python path
 PROJECT_ROOT = os.path.dirname(
     os.path.abspath(__file__)
@@ -17,25 +18,41 @@ if PROJECT_ROOT not in sys.path:
 
 
 # ============================================================
-# IMPORT IMAGE PREDICTOR
+# IMAGE MODEL
+# Lazy-loaded to reduce startup memory usage
 # ============================================================
 
-try:
+predict_image = None
 
-    from ml.predict import predict_image
+IMAGE_MODEL_AVAILABLE = True
 
-    IMAGE_MODEL_AVAILABLE = True
 
-    print("✅ Pest image model loaded")
+def get_image_predictor():
 
-except Exception as e:
+    global predict_image
 
-    IMAGE_MODEL_AVAILABLE = False
+    if predict_image is None:
 
-    print(
-        "⚠️ Pest image model unavailable:",
-        e
-    )
+        try:
+
+            from ml.predict import predict_image as image_predictor
+
+            predict_image = image_predictor
+
+            print(
+                "✅ Pest image model loaded on demand"
+            )
+
+        except Exception as e:
+
+            print(
+                "⚠️ Pest image model unavailable:",
+                e
+            )
+
+            return None
+
+    return predict_image
 
 
 # ============================================================
@@ -407,7 +424,9 @@ def analyze_image():
         # Check model
         # ----------------------------------------------------
 
-        if not IMAGE_MODEL_AVAILABLE:
+        image_predictor = get_image_predictor()
+
+        if image_predictor is None:
 
             return jsonify({
 
@@ -503,6 +522,7 @@ def analyze_image():
             "📷 Image received:"
         )
 
+
         print(
             filepath
         )
@@ -512,7 +532,7 @@ def analyze_image():
         # Predict
         # ----------------------------------------------------
 
-        predictions = predict_image(
+        predictions = image_predictor(
             filepath,
             top_k=3
         )
@@ -646,6 +666,7 @@ if __name__ == "__main__":
 
     print("=" * 70)
 
+
     print(
         "Server:"
     )
@@ -691,9 +712,7 @@ if __name__ == "__main__":
     )
 
     print(
-        "AVAILABLE"
-        if IMAGE_MODEL_AVAILABLE
-        else "NOT AVAILABLE"
+        "AVAILABLE (lazy-loaded)"
     )
 
     print("=" * 70)

@@ -1,6 +1,5 @@
+import os
 from typing import List, Dict
-
-from sentence_transformers import CrossEncoder
 
 from rag.retriever import HybridRetriever
 
@@ -10,13 +9,43 @@ RERANKER_MODEL = (
 )
 
 
+# =========================================================
+# CONFIGURATION
+# =========================================================
+
+ENABLE_RERANKER = (
+    os.getenv(
+        "ENABLE_RERANKER",
+        "true"
+    ).lower()
+    == "true"
+)
+
+
+# =========================================================
+# RERANKER
+# =========================================================
+
 class FarmingReranker:
 
     def __init__(self):
 
+        if not ENABLE_RERANKER:
+
+            self.model = None
+
+            print(
+                "Reranker disabled."
+            )
+
+            return
+
+
         print(
             "Loading reranker..."
         )
+
+        from sentence_transformers import CrossEncoder
 
         self.model = CrossEncoder(
             RERANKER_MODEL
@@ -39,6 +68,19 @@ class FarmingReranker:
 
             return []
 
+
+        # -------------------------------------------------
+        # RERANKING DISABLED
+        # -------------------------------------------------
+
+        if self.model is None:
+
+            return candidates[:top_k]
+
+
+        # -------------------------------------------------
+        # CROSS ENCODER
+        # -------------------------------------------------
 
         pairs = [
 
@@ -88,6 +130,7 @@ class FarmingReranker:
                 ),
 
             reverse=True
+
         )
 
 
@@ -104,20 +147,23 @@ def retrieve_and_rerank(
     final_k: int = 5
 ):
 
+    # -----------------------------------------------------
+    # HYBRID RETRIEVER
+    # -----------------------------------------------------
+
     retriever = HybridRetriever()
 
-    reranker = FarmingReranker()
 
-
-    # ---------------------------------------------
-    # HYBRID RETRIEVAL
-    # ---------------------------------------------
+    # -----------------------------------------------------
+    # RETRIEVE
+    # -----------------------------------------------------
 
     candidates = retriever.hybrid_search(
 
         query,
 
         top_k=candidate_k
+
     )
 
 
@@ -127,9 +173,12 @@ def retrieve_and_rerank(
     )
 
 
-    # ---------------------------------------------
+    # -----------------------------------------------------
     # RERANK
-    # ---------------------------------------------
+    # -----------------------------------------------------
+
+    reranker = FarmingReranker()
+
 
     results = reranker.rerank(
 
@@ -138,6 +187,7 @@ def retrieve_and_rerank(
         candidates,
 
         top_k=final_k
+
     )
 
 
