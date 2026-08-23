@@ -1161,6 +1161,157 @@ export default function App() {
     setUploading(true);
 
     try {
+      /*
+       * =====================================================
+       * IMAGE FILE
+       * Send crop/pest images to the IMAGE ANALYSIS endpoint.
+       * =====================================================
+       */
+
+      if (file.type.startsWith("image/")) {
+        const formData = new FormData();
+
+        formData.append(
+          "file",
+          file
+        );
+
+        const response =
+          await fetch(
+            "https://farmer-ai-backend-4gfg.onrender.com/api/analyze-image",
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.error ||
+              ui(language, "imageFailed")
+          );
+        }
+
+        /*
+         * Get image model prediction.
+         */
+
+        const pest =
+          data.prediction?.pest ||
+          ui(language, "unknownPest");
+
+        /*
+         * =====================================================
+         * RAG
+         * Use the image prediction together with the user's
+         * question to retrieve agricultural knowledge.
+         * =====================================================
+         */
+
+        let knowledge = null;
+
+        try {
+          const infoResponse =
+            await fetch(
+              "https://farmer-ai-backend-4gfg.onrender.com/api/ask",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                body: JSON.stringify({
+                  question:
+                    question.trim()
+                      ? `${question.trim()}
+
+The uploaded crop/pest image was analyzed by the AI image model.
+
+Image analysis prediction:
+"${pest}"
+
+Use this image prediction together with the user's question. Explain the likely disease or pest, what symptoms the farmer should check, what the farmer should do, precautions, and provide the available agricultural sources.`
+                      : `The uploaded crop/pest image was analyzed by the AI image model.
+
+The image analysis prediction is:
+"${pest}"
+
+Explain what this disease or pest is, how a farmer can verify it, what symptoms to check, recommended control measures, precautions, and provide the available agricultural sources.`,
+                  language,
+                }),
+              }
+            );
+
+          const infoData =
+            await infoResponse.json();
+
+          if (infoResponse.ok) {
+            knowledge = infoData;
+          }
+        } catch (error) {
+          console.warn(
+            "Could not retrieve additional RAG information:",
+            error
+          );
+        }
+
+        /*
+         * =====================================================
+         * Show final answer
+         * =====================================================
+         */
+
+        const imageQuestion =
+          question.trim() ||
+          `What disease or pest is present in this crop image?`;
+
+        const finalAnswer =
+          knowledge?.answer ||
+          `The image analysis predicted "${pest}".`;
+
+        setResult({
+          question: imageQuestion,
+          answer: finalAnswer,
+          citations:
+            knowledge?.citations || [],
+          language,
+        });
+
+        /*
+         * Read answer aloud.
+         */
+
+        setTimeout(() => {
+          speakText(
+            finalAnswer,
+            language
+          );
+        }, 300);
+
+        /*
+         * Store uploaded image information.
+         */
+
+        setUploadedFile({
+          filename: file.name,
+          prediction: data.prediction,
+        });
+
+        setQuestion("");
+
+        return;
+      }
+
+      /*
+       * =====================================================
+       * NON-IMAGE FILES
+       * PDF / TXT / CSV / XLSX continue using /api/upload.
+       * =====================================================
+       */
+
       const formData =
         new FormData();
 
