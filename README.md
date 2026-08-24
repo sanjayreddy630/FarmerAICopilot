@@ -100,7 +100,7 @@ Camera access requires browser permission.
 - Vector retrieval
 - Re-ranking
 - Context building
-- LLM-based response generation
+- groq api
 
 ### Image Analysis
 - AI image model
