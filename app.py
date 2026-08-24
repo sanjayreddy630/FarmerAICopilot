@@ -1,9 +1,14 @@
 import os
 import sys
+import asyncio
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import io
+import re
+from gtts import gTTS
+import edge_tts
 
 # Add project root to Python path
 PROJECT_ROOT = os.path.dirname(
@@ -304,6 +309,98 @@ def ask():
             "error":
                 str(e)
 
+        }), 500
+
+
+# ============================================================
+# TEXT TO SPEECH (TTS) - NEURAL VOICE (TELUGU / HINDI / ENGLISH)
+# ============================================================
+
+async def _synthesize_neural_speech(text, lang_code):
+    voice_map = {
+        "te": "te-IN-MohanNeural",    # Crystal-clear, fluent natural Telugu
+        "hi": "hi-IN-MadhurNeural",   # Crystal-clear Hindi
+        "en": "en-IN-PrabhatNeural",  # Clear Indian English
+    }
+    voice = voice_map.get(lang_code, "te-IN-MohanNeural")
+    communicate = edge_tts.Communicate(text, voice)
+    audio_data = b""
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_data += chunk["data"]
+    return audio_data
+
+
+@app.route(
+    "/api/tts",
+    methods=["GET", "POST"]
+)
+def text_to_speech():
+
+    try:
+
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            text = data.get("text", "").strip()
+            language = data.get("language", "Telugu")
+        else:
+            text = request.args.get("text", "").strip()
+            language = request.args.get("language", "Telugu")
+
+        if not text:
+            return jsonify({
+                "success": False,
+                "error": "No text provided"
+            }), 400
+
+        lang_lower = str(language).lower()
+        if "telugu" in lang_lower or lang_lower == "te":
+            lang_code = "te"
+        elif "hindi" in lang_lower or lang_lower == "hi":
+            lang_code = "hi"
+        else:
+            lang_code = "en"
+
+        # Clean citations and markdown
+        clean_text = re.sub(r'\[SOURCE\s*\d+\]', '', text, flags=re.IGNORECASE)
+        clean_text = re.sub(r'[*#_`~]', '', clean_text)
+        clean_text = re.sub(r'^[ \t]*[-•*✓►]\s*', '', clean_text, flags=re.MULTILINE)
+        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+        clean_text = clean_text[:3000]
+
+        # 1. Try Microsoft Neural Voice (Studio-grade clear Telugu/Hindi/English)
+        try:
+            audio_bytes = asyncio.run(_synthesize_neural_speech(clean_text, lang_code))
+            if audio_bytes and len(audio_bytes) > 500:
+                return send_file(
+                    io.BytesIO(audio_bytes),
+                    mimetype="audio/mpeg",
+                    as_attachment=False,
+                    download_name=f"farmer_speech_{lang_code}.mp3"
+                )
+        except Exception as neural_err:
+            print("⚠️ Neural TTS fallback to gTTS:", neural_err)
+
+        # 2. Fallback to gTTS
+        tts = gTTS(text=clean_text, lang=lang_code, slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+
+        return send_file(
+            fp,
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name=f"farmer_speech_{lang_code}.mp3"
+        )
+
+    except Exception as e:
+
+        print("❌ TTS ERROR:", e)
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
         }), 500
 
 

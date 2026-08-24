@@ -14,11 +14,36 @@ import {
   AlertTriangle,
   CheckCircle2,
   BookOpen,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
 
 import "./App.css";
+import { speechEngine } from "./speechEngine";
+
+async function apiFetch(endpoint, options = {}) {
+  const localUrl = `http://127.0.0.1:5000${endpoint}`;
+  const cloudUrl = `https://farmer-ai-backend-4gfg.onrender.com${endpoint}`;
+
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
+  ) {
+    try {
+      const resp = await fetch(localUrl, options);
+      if (resp.ok || resp.status < 500) {
+        return resp;
+      }
+    } catch (e) {
+      console.warn("Local backend unreachable, trying cloud backend:", e);
+    }
+  }
+
+  return fetch(cloudUrl, options);
+}
 
 const UI_TEXT = {
   English: {
@@ -98,7 +123,10 @@ const UI_TEXT = {
     uploadUnable: "Unable to upload file",
     fileUpload: "Upload file",
     noFarmingInfo: "The available farming information has been used to prepare this recommendation.",
-    unknownPest: "Unknown pest"
+    unknownPest: "Unknown pest",
+    readAloud: "Listen to Answer",
+    stopReadAloud: "Stop Audio",
+    speakingNow: "Reading aloud...",
   },
   Telugu: {
     copilot: "కోపైలట్",
@@ -177,7 +205,10 @@ const UI_TEXT = {
     uploadUnable: "ఫైల్‌ను అప్లోడ్ చేయలేకపోయింది",
     fileUpload: "ఫైల్ అప్లోడ్ చేయండి",
     noFarmingInfo: "ఈ సిఫార్సును సిద్ధం చేయడానికి అందుబాటులో ఉన్న వ్యవసాయ సమాచారాన్ని ఉపయోగించాము.",
-    unknownPest: "తెలియని పురుగు"
+    unknownPest: "తెలియని పురుగు",
+    readAloud: "సమాధానం వినండి",
+    stopReadAloud: "ఆడియో ఆపండి",
+    speakingNow: "వాయిస్ చదువుతోంది...",
   },
   Hindi: {
     copilot: "कोपायलट",
@@ -256,7 +287,10 @@ const UI_TEXT = {
     uploadUnable: "फ़ाइल अपलोड नहीं हो सकी",
     fileUpload: "फ़ाइल अपलोड करें",
     noFarmingInfo: "इस सुझाव को तैयार करने के लिए उपलब्ध कृषि जानकारी का उपयोग किया गया है।",
-    unknownPest: "अज्ञात कीट"
+    unknownPest: "अज्ञात कीट",
+    readAloud: "उत्तर सुनें",
+    stopReadAloud: "ऑडियो रोकें",
+    speakingNow: "पढ़कर सुना रहा है...",
   }
 };
 
@@ -606,13 +640,35 @@ function AnswerPage({
   onBack,
 }) {
   const parsed = parseAnswer(answer, language);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = speechEngine.subscribe((status) => {
+      setIsSpeaking(status);
+    });
+    return () => {
+      unsubscribe();
+      speechEngine.stop();
+    };
+  }, []);
+
+  function handleToggleSpeech() {
+    if (isSpeaking) {
+      speechEngine.stop();
+    } else {
+      speechEngine.speak(answer, language);
+    }
+  }
 
   return (
     <main className="answer-page">
       <nav className="answer-navbar">
         <button
           className="back-button"
-          onClick={onBack}
+          onClick={() => {
+            speechEngine.stop();
+            onBack();
+          }}
         >
           <ArrowLeft size={18} />
           {ui(language, "back")}
@@ -630,8 +686,34 @@ function AnswerPage({
           </div>
         </div>
 
-        <div className="language-badge">
-          🌐 {language}
+        <div className="navbar-right-actions">
+          <button
+            type="button"
+            className={`navbar-audio-btn ${isSpeaking ? "speaking" : ""}`}
+            onClick={handleToggleSpeech}
+            title={isSpeaking ? ui(language, "stopReadAloud") : ui(language, "readAloud")}
+          >
+            {isSpeaking ? (
+              <>
+                <span className="audio-wave-anim">
+                  <span className="wave-bar"></span>
+                  <span className="wave-bar"></span>
+                  <span className="wave-bar"></span>
+                </span>
+                <VolumeX size={16} />
+                <span>{ui(language, "stopReadAloud")}</span>
+              </>
+            ) : (
+              <>
+                <Volume2 size={16} />
+                <span>{ui(language, "readAloud")}</span>
+              </>
+            )}
+          </button>
+
+          <div className="language-badge">
+            🌐 {language}
+          </div>
         </div>
       </nav>
 
@@ -651,6 +733,34 @@ function AnswerPage({
           <Sparkles size={19} />
 
           <span>{question}</span>
+        </div>
+
+        <div className="answer-audio-bar">
+          <button
+            type="button"
+            className={`main-audio-btn ${isSpeaking ? "active-speaking" : ""}`}
+            onClick={handleToggleSpeech}
+          >
+            {isSpeaking ? (
+              <>
+                <div className="sound-wave-bars">
+                  <span className="sw-bar bar-1" />
+                  <span className="sw-bar bar-2" />
+                  <span className="sw-bar bar-3" />
+                  <span className="sw-bar bar-4" />
+                </div>
+                <VolumeX size={20} />
+                <span className="audio-main-text">{ui(language, "speakingNow")}</span>
+                <span className="audio-sub-hint">({ui(language, "stopReadAloud")})</span>
+              </>
+            ) : (
+              <>
+                <Volume2 size={20} />
+                <span className="audio-main-text">{ui(language, "readAloud")}</span>
+                <span className="audio-sub-hint">({language} Voice)</span>
+              </>
+            )}
+          </button>
         </div>
       </section>
 
@@ -770,36 +880,7 @@ function getSpeechRecognition() {
 ========================================================= */
 
 function speakText(text, language) {
-  if (!("speechSynthesis" in window)) {
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-
-  const cleanText = String(text || "")
-    .replace(/\[SOURCE\s*\d+\]/gi, "")
-    .replace(/\*\*/g, "")
-    .trim();
-
-  if (!cleanText) {
-    return;
-  }
-
-  const utterance =
-    new SpeechSynthesisUtterance(cleanText);
-
-  if (language === "Telugu") {
-    utterance.lang = "te-IN";
-  } else if (language === "Hindi") {
-    utterance.lang = "hi-IN";
-  } else {
-    utterance.lang = "en-IN";
-  }
-
-  utterance.rate = 0.9;
-  utterance.pitch = 1;
-
-  window.speechSynthesis.speak(utterance);
+  speechEngine.speak(text, language);
 }
 
 function localizedConfidenceLevel(level, language) {
@@ -904,7 +985,7 @@ export default function App() {
       setTimeout(() => {
         if (cameraVideoRef.current) {
           cameraVideoRef.current.srcObject = stream;
-          cameraVideoRef.current.play().catch(() => {});
+          cameraVideoRef.current.play().catch(() => { });
         }
       }, 100);
     } catch (error) {
@@ -962,8 +1043,8 @@ export default function App() {
       const formData = new FormData();
       formData.append("file", blob, "farmer-camera.jpg");
 
-      const response = await fetch(
-        "https://farmer-ai-backend-4gfg.onrender.com/api/analyze-image",
+      const response = await apiFetch(
+        "/api/analyze-image",
         {
           method: "POST",
           body: formData,
@@ -984,8 +1065,8 @@ export default function App() {
       let knowledge = null;
 
       try {
-        const infoResponse = await fetch(
-          "https://farmer-ai-backend-4gfg.onrender.com/api/ask",
+        const infoResponse = await apiFetch(
+          "/api/ask",
           {
             method: "POST",
             headers: {
@@ -1023,7 +1104,7 @@ export default function App() {
       console.error("Camera analysis error:", error);
       alert(
         error.message ||
-          ui(language, "backendImage")
+        ui(language, "backendImage")
       );
       setCameraBusy(false);
     }
@@ -1044,11 +1125,7 @@ export default function App() {
         );
       }
 
-      if (
-        "speechSynthesis" in window
-      ) {
-        window.speechSynthesis.cancel();
-      }
+      speechEngine.stop();
 
       if (cameraStream) {
         cameraStream.getTracks().forEach((track) => track.stop());
@@ -1068,8 +1145,8 @@ export default function App() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://farmer-ai-backend-4gfg.onrender.com/api/ask",
+      const response = await apiFetch(
+        "/api/ask",
         {
           method: "POST",
 
@@ -1093,7 +1170,7 @@ export default function App() {
       if (!response.ok) {
         throw new Error(
           data.error ||
-            "Unable to get answer"
+          "Unable to get answer"
         );
       }
 
@@ -1170,8 +1247,8 @@ export default function App() {
       );
 
       const response =
-        await fetch(
-          "https://farmer-ai-backend-4gfg.onrender.com/api/upload",
+        await apiFetch(
+          "/api/upload",
           {
             method: "POST",
             body: formData,
@@ -1184,7 +1261,7 @@ export default function App() {
       if (!response.ok) {
         throw new Error(
           data.error ||
-            ui(language, "uploadFailed")
+          ui(language, "uploadFailed")
         );
       }
 
@@ -1203,7 +1280,7 @@ export default function App() {
 
       alert(
         error.message ||
-          ui(language, "uploadUnable")
+        ui(language, "uploadUnable")
       );
 
     } finally {
@@ -1506,10 +1583,7 @@ export default function App() {
           citations={result.citations}
           language={result.language}
           onBack={() => {
-            if ("speechSynthesis" in window) {
-              window.speechSynthesis.cancel();
-            }
-
+            speechEngine.stop();
             setResult(null);
           }}
         />
@@ -1741,11 +1815,10 @@ export default function App() {
 
           <button
             type="button"
-            className={`voice-button ${
-              listening
+            className={`voice-button ${listening
                 ? "voice-listening"
                 : ""
-            }`}
+              }`}
             onClick={
               toggleVoiceInput
             }
@@ -1962,7 +2035,7 @@ export default function App() {
                 onClick={closeCamera}
                 disabled={cameraBusy}
               >
-                  {ui(language, "cancel")}
+                {ui(language, "cancel")}
               </button>
 
               <button
@@ -2023,9 +2096,9 @@ export default function App() {
                 <span>{ui(language, "confidenceLevel")}</span>
                 <strong>
                   {localizedConfidenceLevel(
-                      cameraResult.confidenceLevel,
-                      language
-                    )}
+                    cameraResult.confidenceLevel,
+                    language
+                  )}
                 </strong>
               </div>
             </div>

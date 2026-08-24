@@ -79,3 +79,5 @@ uvicorn==0.52.4
 websockets==16.1.1
 Werkzeug==3.1.8
 gunicorn==23.0.0
+edge-tts>=7.2.8
+gTTS>=2.5.4
