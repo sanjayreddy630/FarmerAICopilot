@@ -7,7 +7,6 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import io
 import re
-from gtts import gTTS
 import edge_tts
 
 # Add project root to Python path
@@ -368,31 +367,17 @@ def text_to_speech():
         clean_text = re.sub(r'\s+', ' ', clean_text).strip()
         clean_text = clean_text[:3000]
 
-        # 1. Try Microsoft Neural Voice (Studio-grade clear Telugu/Hindi/English)
-        try:
-            audio_bytes = asyncio.run(_synthesize_neural_speech(clean_text, lang_code))
-            if audio_bytes and len(audio_bytes) > 500:
-                return send_file(
-                    io.BytesIO(audio_bytes),
-                    mimetype="audio/mpeg",
-                    as_attachment=False,
-                    download_name=f"farmer_speech_{lang_code}.mp3"
-                )
-        except Exception as neural_err:
-            print("⚠️ Neural TTS fallback to gTTS:", neural_err)
-
-        # 2. Fallback to gTTS
-        tts = gTTS(text=clean_text, lang=lang_code, slow=False)
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-
-        return send_file(
-            fp,
-            mimetype="audio/mpeg",
-            as_attachment=False,
-            download_name=f"farmer_speech_{lang_code}.mp3"
-        )
+        # Synthesize with Microsoft Neural Voice (Studio-grade clear Telugu/Hindi/English)
+        audio_bytes = asyncio.run(_synthesize_neural_speech(clean_text, lang_code))
+        if audio_bytes and len(audio_bytes) > 500:
+            return send_file(
+                io.BytesIO(audio_bytes),
+                mimetype="audio/mpeg",
+                as_attachment=False,
+                download_name=f"farmer_speech_{lang_code}.mp3"
+            )
+        else:
+            raise RuntimeError("Neural TTS generated empty audio")
 
     except Exception as e:
 
