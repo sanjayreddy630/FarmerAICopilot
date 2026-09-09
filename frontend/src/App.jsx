@@ -14,14 +14,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   BookOpen,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
 
 import { useEffect, useRef, useState } from "react";
 
 import "./App.css";
-import { speechEngine } from "./speechEngine";
 
 async function apiFetch(endpoint, options = {}) {
   const localUrl = `http://127.0.0.1:5000${endpoint}`;
@@ -124,9 +121,6 @@ const UI_TEXT = {
     fileUpload: "Upload file",
     noFarmingInfo: "The available farming information has been used to prepare this recommendation.",
     unknownPest: "Unknown pest",
-    readAloud: "Listen to Answer",
-    stopReadAloud: "Stop Audio",
-    speakingNow: "Reading aloud...",
   },
   Telugu: {
     copilot: "కోపైలట్",
@@ -206,9 +200,6 @@ const UI_TEXT = {
     fileUpload: "ఫైల్ అప్లోడ్ చేయండి",
     noFarmingInfo: "ఈ సిఫార్సును సిద్ధం చేయడానికి అందుబాటులో ఉన్న వ్యవసాయ సమాచారాన్ని ఉపయోగించాము.",
     unknownPest: "తెలియని పురుగు",
-    readAloud: "సమాధానం వినండి",
-    stopReadAloud: "ఆడియో ఆపండి",
-    speakingNow: "వాయిస్ చదువుతోంది...",
   },
   Hindi: {
     copilot: "कोपायलट",
@@ -288,9 +279,6 @@ const UI_TEXT = {
     fileUpload: "फ़ाइल अपलोड करें",
     noFarmingInfo: "इस सुझाव को तैयार करने के लिए उपलब्ध कृषि जानकारी का उपयोग किया गया है।",
     unknownPest: "अज्ञात कीट",
-    readAloud: "उत्तर सुनें",
-    stopReadAloud: "ऑडियो रोकें",
-    speakingNow: "पढ़कर सुना रहा है...",
   }
 };
 
@@ -629,6 +617,106 @@ function BulletList({ items, language }) {
 }
 
 /* =========================================================
+   AUTOMATIC SPEECH ENGINE (Browser SpeechSynthesis)
+========================================================= */
+
+let pendingVoicesChangedHandler = null;
+
+function cleanTextForSpeech(text) {
+  if (!text) return "";
+
+  return String(text)
+    .replace(/\[SOURCE\s*\d+\]/gi, "")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[*#_`~]/g, "")
+    .replace(/^[ \t]*[-•*✓►]\s*/gm, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getBestVoice(voices, targetLang, prefix) {
+  if (!voices || voices.length === 0) return null;
+
+  const targetLower = targetLang.toLowerCase();
+  const prefixLower = prefix.toLowerCase();
+
+  let voice = voices.find((v) => v.lang && v.lang.toLowerCase() === targetLower);
+  if (voice) return voice;
+
+  voice = voices.find(
+    (v) => v.lang && v.lang.toLowerCase().replace("_", "-") === targetLower
+  );
+  if (voice) return voice;
+
+  voice = voices.find((v) => v.lang && v.lang.toLowerCase().startsWith(prefixLower));
+  if (voice) return voice;
+
+  return null;
+}
+
+function speakAIResponse(text, language) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    return;
+  }
+
+  if (pendingVoicesChangedHandler) {
+    window.speechSynthesis.removeEventListener(
+      "voiceschanged",
+      pendingVoicesChangedHandler
+    );
+    pendingVoicesChangedHandler = null;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const cleanText = cleanTextForSpeech(text);
+  if (!cleanText) return;
+
+  let targetLang = "en-IN";
+  let prefix = "en";
+
+  if (language === "Telugu") {
+    targetLang = "te-IN";
+    prefix = "te";
+  } else if (language === "Hindi") {
+    targetLang = "hi-IN";
+    prefix = "hi";
+  }
+
+  const doSpeak = () => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = targetLang;
+
+    const voices = window.speechSynthesis.getVoices() || [];
+    const matchedVoice = getBestVoice(voices, targetLang, prefix);
+    if (matchedVoice) {
+      utterance.voice = matchedVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (voices.length > 0) {
+    doSpeak();
+  } else {
+    pendingVoicesChangedHandler = () => {
+      window.speechSynthesis.removeEventListener(
+        "voiceschanged",
+        pendingVoicesChangedHandler
+      );
+      pendingVoicesChangedHandler = null;
+      doSpeak();
+    };
+    window.speechSynthesis.addEventListener(
+      "voiceschanged",
+      pendingVoicesChangedHandler
+    );
+  }
+}
+
+/* =========================================================
    ANSWER PAGE
 ========================================================= */
 
@@ -640,25 +728,6 @@ function AnswerPage({
   onBack,
 }) {
   const parsed = parseAnswer(answer, language);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = speechEngine.subscribe((status) => {
-      setIsSpeaking(status);
-    });
-    return () => {
-      unsubscribe();
-      speechEngine.stop();
-    };
-  }, []);
-
-  function handleToggleSpeech() {
-    if (isSpeaking) {
-      speechEngine.stop();
-    } else {
-      speechEngine.speak(answer, language);
-    }
-  }
 
   return (
     <main className="answer-page">
@@ -666,7 +735,9 @@ function AnswerPage({
         <button
           className="back-button"
           onClick={() => {
-            speechEngine.stop();
+            if (typeof window !== "undefined" && "speechSynthesis" in window) {
+              window.speechSynthesis.cancel();
+            }
             onBack();
           }}
         >
@@ -687,30 +758,6 @@ function AnswerPage({
         </div>
 
         <div className="navbar-right-actions">
-          <button
-            type="button"
-            className={`navbar-audio-btn ${isSpeaking ? "speaking" : ""}`}
-            onClick={handleToggleSpeech}
-            title={isSpeaking ? ui(language, "stopReadAloud") : ui(language, "readAloud")}
-          >
-            {isSpeaking ? (
-              <>
-                <span className="audio-wave-anim">
-                  <span className="wave-bar"></span>
-                  <span className="wave-bar"></span>
-                  <span className="wave-bar"></span>
-                </span>
-                <VolumeX size={16} />
-                <span>{ui(language, "stopReadAloud")}</span>
-              </>
-            ) : (
-              <>
-                <Volume2 size={16} />
-                <span>{ui(language, "readAloud")}</span>
-              </>
-            )}
-          </button>
-
           <div className="language-badge">
             🌐 {language}
           </div>
@@ -733,34 +780,6 @@ function AnswerPage({
           <Sparkles size={19} />
 
           <span>{question}</span>
-        </div>
-
-        <div className="answer-audio-bar">
-          <button
-            type="button"
-            className={`main-audio-btn ${isSpeaking ? "active-speaking" : ""}`}
-            onClick={handleToggleSpeech}
-          >
-            {isSpeaking ? (
-              <>
-                <div className="sound-wave-bars">
-                  <span className="sw-bar bar-1" />
-                  <span className="sw-bar bar-2" />
-                  <span className="sw-bar bar-3" />
-                  <span className="sw-bar bar-4" />
-                </div>
-                <VolumeX size={20} />
-                <span className="audio-main-text">{ui(language, "speakingNow")}</span>
-                <span className="audio-sub-hint">({ui(language, "stopReadAloud")})</span>
-              </>
-            ) : (
-              <>
-                <Volume2 size={20} />
-                <span className="audio-main-text">{ui(language, "readAloud")}</span>
-                <span className="audio-sub-hint">({language} Voice)</span>
-              </>
-            )}
-          </button>
         </div>
       </section>
 
@@ -873,14 +892,6 @@ function getSpeechRecognition() {
     window.webkitSpeechRecognition ||
     null
   );
-}
-
-/* =========================================================
-   TEXT TO SPEECH
-========================================================= */
-
-function speakText(text, language) {
-  speechEngine.speak(text, language);
 }
 
 function localizedConfidenceLevel(level, language) {
@@ -1125,7 +1136,9 @@ export default function App() {
         );
       }
 
-      speechEngine.stop();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
 
       if (cameraStream) {
         cameraStream.getTracks().forEach((track) => track.stop());
@@ -1190,19 +1203,9 @@ export default function App() {
       });
 
       /*
-       * Read answer aloud.
-       *
-       * This supports:
-       * English
-       * Telugu
-       * Hindi
+       * Speak answer automatically immediately upon receiving AI answer.
        */
-      setTimeout(() => {
-        speakText(
-          answer,
-          language
-        );
-      }, 300);
+      speakAIResponse(answer, language);
 
     } catch (error) {
       console.error(error);
@@ -1583,7 +1586,9 @@ export default function App() {
           citations={result.citations}
           language={result.language}
           onBack={() => {
-            speechEngine.stop();
+            if (typeof window !== "undefined" && "speechSynthesis" in window) {
+              window.speechSynthesis.cancel();
+            }
             setResult(null);
           }}
         />
